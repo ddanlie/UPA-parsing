@@ -61,7 +61,7 @@ def main() -> None:
             page.wait_for_timeout(5000)
 
             title = page.title()
-            print(f"loaded {title}")
+            #print(f"loaded {title}")
             brands = get_brands(page)
 
             for brand_id, redirect in brands:
