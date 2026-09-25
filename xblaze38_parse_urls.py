@@ -1,5 +1,10 @@
 import sys
+import os
+from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
+
+load_dotenv()
+ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
 
 
 def setup_browser(playwright_instance):
@@ -52,7 +57,11 @@ def extract_product_data(page, url):
     range_val = get_table_value(page, "Range")
     speed = get_table_value(page, "Speed")
 
-    raw_data = [url, name, price, brand, colors, motor_power, battery, range_val, speed]
+    data_dict = {
+        "url": url, "name": name, "price": price, "brand": brand, "colors": colors,
+        "motor_power": motor_power, "battery": battery, "range": range_val, "speed": speed
+    }
+    raw_data = [data_dict.get(col, "-") for col in ITEM_COLS]
 
     # Remove \n, \r and \t from collected data
     cleaned_data = [str(val).replace('\n', ' ').replace('\r', '').replace('\t', ' ').strip() for val in raw_data]

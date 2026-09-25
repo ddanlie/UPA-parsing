@@ -1,16 +1,18 @@
 import sys
+import os
 import time
+from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 
-
+load_dotenv()
 BASE_URL = "https://www.geekbuying.com"
-CATEGORIES = [
-    "Electric-Scooters-2080",
-    "Bikes-2082" 
-]
-BRAND_IDS = [
-    "1557", "1509", "1735", "1670", "1207", "1390", "1511", "1170", "1527", "794"
-]
+CATEGORY_IDS = os.getenv("CATEGORY_IDS_TO_PARSE", "").split(",")
+CATEGORY_MAP = {
+    "2080": "Electric-Scooters-2080",
+    "2082": "Bikes-2082"
+}
+CATEGORIES = [CATEGORY_MAP.get(cat_id.strip(), cat_id.strip()) for cat_id in CATEGORY_IDS if cat_id.strip()]
+BRAND_IDS = os.getenv("XBLAZE38_BRANDS_IDS", "").split(",")
 
 
 def setup_browser(playwright_instance):
