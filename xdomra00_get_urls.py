@@ -68,7 +68,8 @@ def get_urls():
 
 
 
-try: 
-    get_urls()
-except Exception as e: 
-    print(f"Error occurred while fetching the page: {e}", file=stderr)
+if __name__ == "__main__":
+    try: 
+        get_urls()
+    except Exception as e: 
+        print(f"Error occurred while fetching the page: {e}", file=stderr)

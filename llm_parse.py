@@ -40,6 +40,7 @@ def llm_resolve_cols(text: str) -> list[str]:
                 "schema": {
                     "type": "object",
                     "properties": {
+                        "url": {"type": "string"},
                         "name": {"type": "string"},
                         "price": {"type": "number"},
                         "brand": {"type": "string"},
@@ -53,6 +54,7 @@ def llm_resolve_cols(text: str) -> list[str]:
                         "speed": {"type": "number"}
                     },
                     "required": [
+                        "url",
                         "name",
                         "price",
                         "brand",
