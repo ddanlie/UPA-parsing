@@ -13,7 +13,7 @@ BRANDS_TO_PARRSE      = [brand.lower() for brand in os.getenv("XDOMRA00_BRANDS",
 ITEM_COLS             = os.getenv("ITEM_COLS", "").split(",")
 CATEGORY_IDS_TO_PARSE = [int(catid) for catid in os.getenv("CATEGORY_IDS_TO_PARSE", "").split(",")]
 USER_AGENT            = "student-project-script/1.0"
-
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 def _get_and_print_items_links(pagenum:int, soup:BeautifulSoup):
     # Find all items with given brands and category ids
@@ -49,8 +49,10 @@ def _get_html_doc_for_page(pagenum:int) -> str:
 
 def get_urls(): 
     # Get 1st page by url and page number)
-    html_doc = _get_html_doc_for_page(1)
-    #html_doc = open("file.html", "r", encoding="utf-16").read()
+    if DEBUG:
+        html_doc = open("file.html", "r", encoding="utf-16").read()
+    else:
+        html_doc = _get_html_doc_for_page(1)
 
     soup = BeautifulSoup(html_doc, 'html.parser')
     
