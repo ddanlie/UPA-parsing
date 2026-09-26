@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-set -eu
+python -m venv .venv
 
 PYTHON=".venv/bin/python"
 
@@ -8,5 +8,5 @@ PYTHON=".venv/bin/python"
 "$PYTHON" -m pip install -r requirements.txt
 "$PYTHON" -m playwright install
 
-printf '%s\n' "Environment ready"
+echo "Environment ready"
 
