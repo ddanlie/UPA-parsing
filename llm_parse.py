@@ -6,6 +6,7 @@ import json
 
 load_dotenv()
 
+LOCAL_LLM = os.getenv("LOCAL_LLM", "false").lower() == "true"
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_HOST_BASE_URL = os.getenv("LLM_HOST_BASE_URL", "")
 ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
@@ -13,11 +14,11 @@ EMPTY_COLS = ["" for i in range(len(ITEM_COLS))]
 
 def llm_resolve_cols(text: str) -> list[str]:
     client = OpenAI(
-        api_key=LLM_API_KEY, 
-        base_url=LLM_HOST_BASE_URL
+        api_key  = "xxx" if LOCAL_LLM else LLM_API_KEY,
+        base_url = "http://127.0.0.1:8080/v1" if LOCAL_LLM else LLM_HOST_BASE_URL
     )
     response = client.chat.completions.create(
-        model="runware/qwen3.5-9b",
+        model="Ling-3.0-tiny-Q6_K.gguf" if LOCAL_LLM else "runware/qwen3.5-9b",
         timeout=5,
         messages=[
             {

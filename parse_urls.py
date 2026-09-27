@@ -9,9 +9,9 @@ URLS_PER_SCRIPT_RUN = 4
 scripts = sorted(SCRIPT_DIR.glob("*_parse_urls.py"))
 script_to_run_index = 0
 
-def _run_scrtipt(urls_script_input: list[str]):
+def _run_scrtipt(urls_script_input: list[str]) -> int:
     global scripts, script_to_run_index
-    
+
     script = scripts[script_to_run_index]
 
     #############################################
@@ -22,25 +22,40 @@ def _run_scrtipt(urls_script_input: list[str]):
 
     script_to_run_index = (script_to_run_index + 1) % len(scripts)
     command = [sys.executable, str(script)]
-    result = subprocess.run(
+    process = subprocess.Popen(
         command,
         cwd=SCRIPT_DIR,
-        input="\n".join(urls_script_input),
-        capture_output=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
         text=True,
     )
-    print(result.stdout, end="")
-    if result.stderr:
-        print(f"=== {script.name} errors ===", file=sys.stderr)
-        print(result.stderr, file=sys.stderr, end="")
+    if process.stdin is None:
+        print(f"Failed to capture stdout for {script.name}", file=sys.stderr)
+        return 1
 
-    return result.returncode
+    process.stdin.write("\n".join(urls_script_input))
+
+    if process.stdout is None:
+        print(f"Failed to capture stdout for {script.name}", file=sys.stderr)
+        return 1
+
+    for line in process.stdout:
+        print(line, end="", flush=True)
+        
+    returncode = process.wait()
+    stderr = process.stderr
+    if stderr:
+        print(f"=== {script.name} errors ===", file=sys.stderr)
+        print(stderr.read() , file=sys.stderr, end="")
+
+    return returncode
 
 
 def main():
     failed = False
     urls_script_input = []
     for url in sys.stdin:
+        url = url.strip()
         urls_script_input.insert(0, url) # respect the input order
         if len(urls_script_input) % URLS_PER_SCRIPT_RUN == 0:
             if _run_scrtipt(urls_script_input) != 0:

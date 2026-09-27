@@ -2,5 +2,4 @@
 
 PYTHON=".venv/bin/python"
 
-"$PYTHON" get_urls.py | tee url_test.txt | head -n 10 | "$PYTHON" parse_urls.py
-
+"$PYTHON" get_urls.py | awk '!seen[$0]++' | tee url_test.txt | awk 'NR <= 10' | "$PYTHON" parse_urls.py

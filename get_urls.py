@@ -12,24 +12,31 @@ def main() -> int:
 
     for script in scripts:
         command = [sys.executable, str(script)]
-        
+
         #############################################
         if script.name == "xdobia15_get_urls.py":
             continue
             #command.append("--chromium")
         #############################################
 
-        result = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=SCRIPT_DIR,
-            capture_output=True,
+            stdout=subprocess.PIPE,
             text=True,
         )
-        print(result.stdout, end="")
-        if result.stderr:
+        if process.stdout is None:
+            print(f"Failed to capture stdout for {script.name}", file=sys.stderr)
+            failed = True
+            continue
+        for line in process.stdout:
+            print(line, end="", flush=True)
+        returncode = process.wait()
+        stderr = process.stderr
+        if stderr:
             print(f"=== {script.name} errors ===", file=sys.stderr)
-            print(result.stderr, file=sys.stderr, end="")
-        if result.returncode != 0:
+            print(stderr.read() , file=sys.stderr, end="")
+        if returncode != 0:
             failed = True
 
     return 1 if failed else 0

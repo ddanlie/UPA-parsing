@@ -2,4 +2,6 @@
 
 set "PYTHON=.venv\Scripts\python.exe"
 
-"%PYTHON%" get_urls.py | powershell -Command "$input | Tee-Object url_test.txt | Select-Object -First 10" | "%PYTHON%" parse_urls.py
+"%PYTHON%" get_urls.py | powershell -Command "$lines=@($input ^| Select-Object -Unique); [IO.File]::WriteAllLines('url_test.txt',$lines); if($lines.Count -gt 10){$lines[0..9]}else{$lines}" | "%PYTHON%" parse_urls.py
+:: For single file: 
+:: cmd /c ".venv\Scripts\python.exe -X utf8 xdomra00_parse_urls.py < urls.txt > data.tsv"

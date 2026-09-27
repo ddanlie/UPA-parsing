@@ -76,10 +76,10 @@ def main():
 
                     try:
                         # Load page
-                        page.goto(target_url, timeout=60000)
+                        page.goto(target_url, timeout=3_000)
 
                         # Wait for products
-                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=15000)
+                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=3_000)
 
                     except Exception as e:
                         # Continue if brand doesn't have more pages
@@ -91,13 +91,14 @@ def main():
                     urls.update(page_urls)
 
                     # Wait to prevent too many requests
-                    time.sleep(2)
+                    time.sleep(1)
 
         browser.close()
 
     # Print urls
     for url in urls:
         print(url)
+        sys.stdout.flush()
 
 
 if __name__ == "__main__":

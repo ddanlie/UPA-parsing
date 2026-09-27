@@ -1,6 +1,7 @@
   # This script  parses the vehicles page and extracts the URLs of the individual vehicle pages of chosen brands
 import os
 from sys import stderr
+import sys
 import time
 from bs4 import BeautifulSoup
 import requests
@@ -37,11 +38,13 @@ def _get_and_print_items_links(pagenum:int, soup:BeautifulSoup):
         if url and url not in printed_urls:
             printed_urls.add(url)
             print(url)
+            sys.stdout.flush()
 
 def _get_html_doc_for_page(pagenum:int) -> str:
     response = requests.get(
         VEHICLES_PAGE_URL.format(pagenum),
-        headers={ "User-Agent": USER_AGENT }
+        headers={ "User-Agent": USER_AGENT },
+        timeout=10
     )
     response.raise_for_status()
     html_doc = response.content.decode("utf-8")
@@ -49,29 +52,30 @@ def _get_html_doc_for_page(pagenum:int) -> str:
 
 def get_urls(): 
     # Get 1st page by url and page number)
-    if DEBUG:
-        html_doc = open("file.html", "r", encoding="utf-16").read()
-    else:
-        html_doc = _get_html_doc_for_page(1)
+    try: 
+        if DEBUG:
+            html_doc = open("file.html", "r", encoding="utf-16").read()
+        else:
+            html_doc = _get_html_doc_for_page(1)
 
-    soup = BeautifulSoup(html_doc, 'html.parser')
-    
-    pages_count = max(int(a.get_text()) for a in soup.find("div", id="pagination").find_all("a", class_="pagenumber"))
-
-    _get_and_print_items_links(1, soup)
-
-    for pagenum in range(2, pages_count + 1):
-        time.sleep(1)  # Be respectful to the server
-        html_doc = _get_html_doc_for_page(pagenum)
         soup = BeautifulSoup(html_doc, 'html.parser')
         
-        _get_and_print_items_links(pagenum, soup)
+        pages_count = max(int(a.get_text()) for a in soup.find("div", id="pagination").find_all("a", class_="pagenumber"))
 
-
-
-
-if __name__ == "__main__":
-    try: 
-        get_urls()
+        _get_and_print_items_links(1, soup)
     except Exception as e: 
         print(f"Error occurred while fetching the page: {e}", file=stderr)
+
+
+    for pagenum in range(2, pages_count + 1):
+        try:
+            time.sleep(1)  # Be respectful to the server
+            html_doc = _get_html_doc_for_page(pagenum)
+            soup = BeautifulSoup(html_doc, 'html.parser')
+            
+            _get_and_print_items_links(pagenum, soup)
+        except Exception as e: 
+            print(f"Error occurred while fetching the page: {e}", file=stderr)
+
+if __name__ == "__main__":
+    get_urls()
