@@ -11,8 +11,6 @@ def setup_browser(playwright_instance):
     # Initialize browser
     browser = playwright_instance.chromium.launch(headless=True)
     page = browser.new_page()
-    page.set_default_timeout(7_000)  # locator operations: 3 seconds
-    page.set_default_navigation_timeout(3_000)  # page.goto(): 3 seconds
 
     # Set headers to prevent blocking script as a bot
     page.set_extra_http_headers({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"})
@@ -84,8 +82,8 @@ def main():
         for url in urls:
             try:
                 # Extract data from 1 url
-                page.goto(url, timeout=10_000)
-                page.wait_for_selector('h1', state="attached", timeout=10_000)
+                page.goto(url, timeout=15000, wait_until="domcontentloaded")
+                page.wait_for_selector('h1', state="attached", timeout=5000)
                 data = extract_product_data(page, url)
                 print("\t".join(data))
                 sys.stdout.flush()

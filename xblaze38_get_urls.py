@@ -38,23 +38,17 @@ def extract_urls_from_page(page):
         "motor", "printer", "laser", "monitor", "projector", "smartwatch", "purifier",
         "camera", "vacuum", "pc", "starter", "station"
     ]
-    
-    # Find detail pages with "/item/" in url
-    product_links = page.locator('a[href*="/item/"]')
 
-    # Go through locators and get links
-    for i in range(product_links.count()):
-        href = product_links.nth(i).get_attribute("href")
+    # Find detail pages with "/item/" in url
+    hrefs = page.locator('a[href*="/item/"]').evaluate_all("elements => elements.map(el => el.getAttribute('href'))")
+
+    for href in hrefs:
         if href:
             # Add BASE_URL for relative links
             full_url = href if href.startswith("http") else BASE_URL + href
 
-            # Ignore suggested items
-            if "?pmrm=" in full_url:
-                continue
-
-            # Ignore excluded items
-            if any(word in full_url.lower() for word in EXCLUDED_WORDS):
+            # Ignore suggested and excluded items
+            if "?pmrm=" in full_url or any(word in full_url.lower() for word in EXCLUDED_WORDS):
                 continue
 
             # Add url to set
@@ -76,14 +70,13 @@ def main():
 
                     try:
                         # Load page
-                        page.goto(target_url, timeout=3_000)
+                        page.goto(target_url, timeout=15000, wait_until="domcontentloaded")
 
                         # Wait for products
-                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=3_000)
+                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=5000)
 
                     except Exception as e:
                         # Continue if brand doesn't have more pages
-                        print(f"Error with loading a page {target_url}: {e}", file=sys.stderr)
                         continue
 
                     # Extract products urls
