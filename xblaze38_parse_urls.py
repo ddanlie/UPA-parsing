@@ -84,11 +84,10 @@ def main():
         for url in urls:
             try:
                 # Extract data from 1 url
-                page.goto(url, timeout=15000, wait_until="domcontentloaded")
+                page.goto(url, timeout=5000, wait_until="domcontentloaded")
                 page.wait_for_selector('h1', state="attached", timeout=5000)
                 data = extract_product_data(page, url)
-                print("\t".join(data))
-                sys.stdout.flush()
+                print("\t".join(data), flush=True)
 
             except Exception as e:
                 print(f"Error with parsing {url}: {e}", file=sys.stderr)

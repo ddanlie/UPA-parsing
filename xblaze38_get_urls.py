@@ -92,8 +92,7 @@ def main():
 
     # Print urls
     for url in urls:
-        print(url)
-        sys.stdout.flush()
+        print(url, flush=True)
 
 
 if __name__ == "__main__":

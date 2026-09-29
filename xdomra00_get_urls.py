@@ -40,15 +40,23 @@ def _get_and_print_items_links(pagenum:int, soup:BeautifulSoup):
             print(url)
             sys.stdout.flush()
 
-def _get_html_doc_for_page(pagenum:int, timeout:int=3) -> str:
-    response = requests.get(
-        VEHICLES_PAGE_URL.format(pagenum),
-        headers={ "User-Agent": USER_AGENT },
-        timeout=timeout
-    )
-    response.raise_for_status()
-    html_doc = response.content.decode("utf-8")
-    return html_doc
+def _get_html_doc_for_page(pagenum:int, timeout:int=3, attempts=1) -> str:
+    for attempt in range(attempts):
+        try:
+            response = requests.get(
+                VEHICLES_PAGE_URL.format(pagenum),
+                headers={ "User-Agent": USER_AGENT },
+                timeout=timeout,
+                allow_redirects=True,
+            )
+            response.raise_for_status()
+            html_doc = response.content.decode("utf-8")
+            return html_doc
+        except Exception as e:
+            if attempt == attempts - 1:
+                raise e
+            time.sleep(1)
+    raise Exception(f"Failed to fetch page {pagenum} after {attempts} attempts.")
 
 def get_urls(): 
     # Get 1st page by url and page number)
@@ -56,7 +64,7 @@ def get_urls():
         if DEBUG:
             html_doc = open("file.html", "r", encoding="utf-16").read()
         else:
-            html_doc = _get_html_doc_for_page(1, timeout=30)
+            html_doc = _get_html_doc_for_page(1, timeout=10, attempts=3)
 
         soup = BeautifulSoup(html_doc, 'html.parser')
         
