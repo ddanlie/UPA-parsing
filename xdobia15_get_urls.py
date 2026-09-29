@@ -57,7 +57,7 @@ def main() -> None:
             ])
         try:
             page = browser.new_page()
-            page.goto(URL, wait_until="commit", timeout=10_000)
+            page.goto(URL, wait_until="commit", timeout=20000)
             page.wait_for_timeout(5000)
 
             title = page.title()
@@ -66,7 +66,7 @@ def main() -> None:
 
             for brand_id, redirect in brands:
                 brand_url = urljoin(page.url, redirect)
-                page.goto(brand_url, wait_until="commit", timeout=10_000)
+                page.goto(brand_url, wait_until="commit", timeout=20000)
                 page.wait_for_timeout(5000)
 
                 for product_link in get_product_links(page):

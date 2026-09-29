@@ -15,8 +15,9 @@ ITEM_COLS             = os.getenv("ITEM_COLS", "").split(",")
 CATEGORY_IDS_TO_PARSE = [int(catid) for catid in os.getenv("CATEGORY_IDS_TO_PARSE", "").split(",")]
 USER_AGENT            = "student-project-script/1.0"
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+DEFAULT_PAGE_COUNT = 11
 
-def _get_and_print_items_links(pagenum:int, soup:BeautifulSoup):
+def _get_and_print_items_links(soup:BeautifulSoup):
     # Find all items with given brands and category ids
     items_links = [
         link
@@ -40,7 +41,7 @@ def _get_and_print_items_links(pagenum:int, soup:BeautifulSoup):
             print(url)
             sys.stdout.flush()
 
-def _get_html_doc_for_page(pagenum:int, timeout:int=3, attempts=1) -> str:
+def _get_html_doc_for_page(pagenum:int, timeout:int=20, attempts=1) -> str:
     for attempt in range(attempts):
         try:
             response = requests.get(
@@ -64,16 +65,16 @@ def get_urls():
         if DEBUG:
             html_doc = open("file.html", "r", encoding="utf-16").read()
         else:
-            html_doc = _get_html_doc_for_page(1, timeout=10, attempts=3)
+            html_doc = _get_html_doc_for_page(1, timeout=30, attempts=3)
 
         soup = BeautifulSoup(html_doc, 'html.parser')
         
         pages_count = max(int(a.get_text()) for a in soup.find("div", id="pagination").find_all("a", class_="pagenumber"))
 
-        _get_and_print_items_links(1, soup)
+        _get_and_print_items_links(soup)
     except Exception as e: 
         print(f"Error occurred while fetching the page and pages count: {e}", file=stderr)
-        pages_count = 0
+        pages_count = DEFAULT_PAGE_COUNT
 
 
     for pagenum in range(2, pages_count + 1):
@@ -82,7 +83,7 @@ def get_urls():
             html_doc = _get_html_doc_for_page(pagenum)
             soup = BeautifulSoup(html_doc, 'html.parser')
             
-            _get_and_print_items_links(pagenum, soup)
+            _get_and_print_items_links(soup)
         except Exception as e: 
             print(f"Error occurred while fetching the page: {e}", file=stderr)
 

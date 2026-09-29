@@ -84,8 +84,8 @@ def main():
         for url in urls:
             try:
                 # Extract data from 1 url
-                page.goto(url, timeout=5000, wait_until="domcontentloaded")
-                page.wait_for_selector('h1', state="attached", timeout=5000)
+                page.goto(url, timeout=20000, wait_until="domcontentloaded")
+                page.wait_for_selector('h1', state="attached", timeout=20000)
                 data = extract_product_data(page, url)
                 print("\t".join(data), flush=True)
 

@@ -72,10 +72,10 @@ def main():
 
                     try:
                         # Load page
-                        page.goto(target_url, timeout=1000, wait_until="domcontentloaded")
+                        page.goto(target_url, timeout=20000, wait_until="domcontentloaded")
 
                         # Wait for products
-                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=3000)
+                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=5000)
 
                     except Exception as e:
                         # Continue if brand doesn't have more pages
