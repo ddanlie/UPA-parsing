@@ -19,11 +19,11 @@ def llm_resolve_cols(text: str) -> list[str]:
     )
     response = client.chat.completions.create(
         model="Ling-3.0-tiny-Q6_K.gguf" if LOCAL_LLM else "runware/qwen3.5-9b",
-        timeout=5,
+        timeout=30,
         messages=[
             {
                 "role": "user",
-                "content": f"`{text}` Look at the item content description. Parse the following columns: " + ", ".join(ITEM_COLS) + ". If a column is not present, return an empty string for that column. Return only a JSON object with these column names as keys.",
+                "content": f"`{text}` Look at the item content description. Parse the following columns: " + ", ".join(ITEM_COLS) + ". If a column is not present, return an empty string for that column. Return only valid JSON.",
             },
         ],
         reasoning_effort="none",
