@@ -2,9 +2,11 @@
 
 ### Team: xdomra00
 
-### Eshop: https://www.geekbuying.com/
+### Eshop: 
+https://www.geekbuying.com/
 
-### Parse URL (Scooters + Bicycles): https://www.geekbuying.com/category/E-Bikes-Scooters-Wheels-1794
+### Parse URL (Scooters + Bicycles): 
+https://www.geekbuying.com/category/E-Bikes-Scooters-Wheels-1794
 
 ### Columns: 
 | url | name | price | brand | colors | motor power | battery power capacity | range | speed |
@@ -20,3 +22,8 @@
 
 ### robots.txt
 byl použit vlastní, nezakázaný User-Agent na nezakázaných endpointech
+
+### HOW TO RUN
+1. make files executable `chmod +x ./build.sh && chmod +x ./run.sh`
+2. build the project `./build.sh`
+3. run the demo `./run.sh`
