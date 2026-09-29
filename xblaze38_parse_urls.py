@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 
 load_dotenv()
+
+MERLIN = os.getenv("MERLIN", "false") == "true"
 ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
 
 

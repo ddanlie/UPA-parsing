@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 
 load_dotenv()
+
+MERLIN = os.getenv("MERLIN", "false") == "true"
 BASE_URL = "https://www.geekbuying.com"
 CATEGORY_IDS = os.getenv("CATEGORY_IDS_TO_PARSE", "").split(",")
 CATEGORY_MAP = {
