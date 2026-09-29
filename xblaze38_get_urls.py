@@ -19,7 +19,7 @@ BRAND_IDS = os.getenv("XBLAZE38_BRANDS_IDS", "").split(",")
 
 def setup_browser(playwright_instance):
     # Initialize browser
-    browser = playwright_instance.chromium.launch(headless=True)
+    browser = playwright_instance.chromium.launch(headless=True, **({"executable_path":"/usr/local/bin/chrome"} if MERLIN else {}))
     page = browser.new_page()
     
     # Set headers to prevent blocking script as a bot
@@ -72,10 +72,10 @@ def main():
 
                     try:
                         # Load page
-                        page.goto(target_url, timeout=15000, wait_until="domcontentloaded")
+                        page.goto(target_url, timeout=1000, wait_until="domcontentloaded")
 
                         # Wait for products
-                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=5000)
+                        page.wait_for_selector('a[href*="/item/"]', state="attached", timeout=3000)
 
                     except Exception as e:
                         # Continue if brand doesn't have more pages

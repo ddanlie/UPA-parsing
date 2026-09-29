@@ -11,7 +11,7 @@ ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
 
 def setup_browser(playwright_instance):
     # Initialize browser
-    browser = playwright_instance.chromium.launch(headless=True)
+    browser = playwright_instance.chromium.launch(headless=True, **({"executable_path":"/usr/local/bin/chrome"} if MERLIN else {}))
     page = browser.new_page()
 
     # Set headers to prevent blocking script as a bot
