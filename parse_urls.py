@@ -34,6 +34,7 @@ def _run_scrtipt(urls_script_input: list[str]) -> int:
         return 1
 
     process.stdin.write("\n".join(urls_script_input))
+    process.stdin.close()
 
     if process.stdout is None:
         print(f"Failed to capture stdout for {script.name}", file=sys.stderr)

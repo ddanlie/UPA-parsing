@@ -40,11 +40,11 @@ def _get_and_print_items_links(pagenum:int, soup:BeautifulSoup):
             print(url)
             sys.stdout.flush()
 
-def _get_html_doc_for_page(pagenum:int) -> str:
+def _get_html_doc_for_page(pagenum:int, timeout:int=3) -> str:
     response = requests.get(
         VEHICLES_PAGE_URL.format(pagenum),
         headers={ "User-Agent": USER_AGENT },
-        timeout=10
+        timeout=timeout
     )
     response.raise_for_status()
     html_doc = response.content.decode("utf-8")
@@ -56,7 +56,7 @@ def get_urls():
         if DEBUG:
             html_doc = open("file.html", "r", encoding="utf-16").read()
         else:
-            html_doc = _get_html_doc_for_page(1)
+            html_doc = _get_html_doc_for_page(1, timeout=30)
 
         soup = BeautifulSoup(html_doc, 'html.parser')
         
@@ -64,7 +64,8 @@ def get_urls():
 
         _get_and_print_items_links(1, soup)
     except Exception as e: 
-        print(f"Error occurred while fetching the page: {e}", file=stderr)
+        print(f"Error occurred while fetching the page and pages count: {e}", file=stderr)
+        pages_count = 0
 
 
     for pagenum in range(2, pages_count + 1):
