@@ -38,7 +38,7 @@ def parse_urls():
             response = requests.get(
                 url,         
                 headers={ "User-Agent": USER_AGENT },
-                timeout=10
+                timeout=3
             )
             response.raise_for_status()
             soup = BeautifulSoup(response.content.decode("utf-8"), "html.parser")
