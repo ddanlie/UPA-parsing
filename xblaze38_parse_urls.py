@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 
@@ -19,31 +20,61 @@ def setup_browser(playwright_instance):
     return browser, page
 
 
-def get_table_value(page, key_name):
-    try:
-        # Find items with key_name
-        row = page.locator('#Description table tr').filter(has_text=key_name).first
-        raw_text = row.locator('td').nth(1).inner_text().strip()
+def get_table_value(page, key_names):
+    for key_name in key_names:
+        try:
+            # Find items with key_name
+            rows = page.locator('#Description table tr').filter(has_text=key_name).all()
 
-        # If there are data for more table cells in one cell
-        if ":" in raw_text:
-            for line in raw_text.split('\n'):
-                # Find key in any line inside a cell
-                if key_name.lower() in line.lower() and ":" in line:
-                    # Return part after found key
-                    return line.split(":", 1)[1].strip()
+            for row in rows:
+                cells = row.locator('td, th')
+                cell_count = cells.count()
+                if cell_count == 0:
+                    continue
 
-        # Return text if there is only text
-        return raw_text
+                target_cell_index = 1 if cell_count >= 2 else 0
+                raw_text = cells.nth(target_cell_index).inner_text(timeout=2000).strip()
 
-    except Exception:
+                # If there are data for more table cells in one cell
+                if ":" in raw_text:
+                    for line in raw_text.split('\n'):
+                        # Find key in any line inside a cell
+                        if key_name.lower() in line.lower() and ":" in line:
+                            val = line.split(":", 1)[1].strip()
+                            if val and len(val) < 60:
+                                # Return part after found key and ": " if exists and is shorter than 60 characters
+                                return val
+
+                if cell_count >= 2:
+                    first_cell_text = cells.nth(0).inner_text(timeout=2000).strip()
+                    if key_name.lower() in first_cell_text.lower():
+                        val = raw_text.split('\n')[0].strip()
+                        # Return text shorter than 60 characters
+                        if len(val) < 60:
+                            return val
+
+        except Exception:
+            continue
+    return "-"
+
+
+def shorten_product_name(name):
+    if not name:
         return "-"
+
+    # Find "Electric" in name and 1 next word
+    match = re.search(r"(?i)\bElectric\s+([A-Za-z0-9-]+)", name)
+    if match:
+        # Shorten name to "Electric" and 1 word only
+        return name[:match.end()].strip()
+    return name.strip()
 
 
 def extract_product_data(page, url):
     # Extraction
     try:
         name = page.locator("h1").first.inner_text().strip()
+        name = shorten_product_name(name)
     except Exception:
         name = "-"
 
@@ -52,16 +83,25 @@ def extract_product_data(page, url):
     except Exception:
         price = "-"
 
-    brand = get_table_value(page, "Brand")
-    colors = get_table_value(page, "Color")
-    motor_power = get_table_value(page, "Power")
-    battery = get_table_value(page, "Capacity")
-    range_val = get_table_value(page, "Range")
-    speed = get_table_value(page, "Speed")
+    brand = get_table_value(page, ["Brand"])
+    if brand == "-":
+        try:
+            brand_text = page.locator(".brand_name").first.inner_text(timeout=1000).strip()
+            brand = brand_text.replace("Brand:", "").strip()
+            if not brand:
+                brand = "-"
+        except Exception:
+            pass
+
+    colors = get_table_value(page, ["Color", "Colour"])
+    motor_power = get_table_value(page, ["Rated Power", "Motor Power", "Motor", "Power"])
+    battery = get_table_value(page, ["Battery Capacity", "Capacity & Voltage", "Battery", "Capacity", "Voltage"])
+    range_val = get_table_value(page, ["Max Range", "Range", "Millage", "Mileage", "Distance"])
+    speed = get_table_value(page, ["Max Speed", "Top Speed", "Speed"])
 
     data_dict = {
         "url": url, "name": name, "price": price, "brand": brand, "colors": colors,
-        "motor_power": motor_power, "battery": battery, "range": range_val, "speed": speed
+        "motor power": motor_power, "battery power capacity": battery, "range": range_val, "speed": speed
     }
     raw_data = [data_dict.get(col, "-") for col in ITEM_COLS]
 
@@ -71,7 +111,18 @@ def extract_product_data(page, url):
 
 def main():
     # Read urls
-    urls = [line.strip() for line in sys.stdin if line.strip()]
+    # DEBUG START:
+    if len(sys.argv) > 1:
+        input_path = sys.argv[1]
+        try:
+            with open(input_path, "r", encoding="utf-8") as f:
+                urls = [line.strip() for line in f if line.strip()]
+        except OSError as e:
+            print(f"Failed to read input file '{input_path}': {e}", file=sys.stderr)
+            return
+    else:
+        urls = [line.strip() for line in sys.stdin if line.strip()]
+    # DEBUG END: urls = [line.strip() for line in sys.stdin if line.strip()]
 
     if not urls:
         print("There are no urls in stdin.", file=sys.stderr)
@@ -85,7 +136,7 @@ def main():
             try:
                 # Extract data from 1 url
                 page.goto(url, timeout=20000, wait_until="domcontentloaded")
-                page.wait_for_selector('h1', state="attached", timeout=20000)
+                page.wait_for_selector('h1', state="attached", timeout=10000)
                 data = extract_product_data(page, url)
                 print("\t".join(data), flush=True)
 
