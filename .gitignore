@@ -17,6 +17,10 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# cache and outputs to be processed
+cache/
+tables/
+
 # Build and distribution output
 build/
 dist/
@@ -28,3 +32,6 @@ dist/
 
 #
 *.tsv
+out_parse.txt
+out.txt
+params.txt
