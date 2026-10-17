@@ -15,10 +15,10 @@ ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
 EMPTY_COLS = ["" for i in range(len(ITEM_COLS))]
 
 models = [
+    "deepseek-v4-flash",
     "runware/qwen3.5-9b",
     "runware/qwen3.5-4b",
-    "gemma-4-31b-it",
-    "deepseek-v4-flash"
+    "gemma-4-31b-it"
 ] if not LOCAL_LLM else ["Ling-3.0-tiny-Q6_K.gguf"]
 
 def llm_resolve_cols(text: str) -> list[str]:
