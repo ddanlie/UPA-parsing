@@ -22,9 +22,9 @@ EMPTY_COLS = ["" for i in range(len(ITEM_COLS))]
 # ] if not LOCAL_LLM else ["Ling-3.0-tiny-Q6_K.gguf"]
 
 models = [
-    "google/gemma-3-12b-it",
     "deepseek-ai/DeepSeek-V4-Flash-0731",
-    "Qwen/Qwen3.5-9B",
+    "Qwen/Qwen3.6-35B-A3B",
+    "google/gemma-3-27b-it",
 ] if not LOCAL_LLM else ["Ling-3.0-tiny-Q6_K.gguf"]
 
 def llm_resolve_cols(text: str) -> list[str]:
