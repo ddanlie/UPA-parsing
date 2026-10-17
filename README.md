@@ -28,8 +28,26 @@ byl použit vlastní, nezakázaný User-Agent na nezakázaných endpointech
 2. build the project `./build.sh`
 3. run the demo `./run.sh`
 
-### LLM parsing
+### Run details / errors
+
+#### LLM parsing
 Tato část je pouze informativní a pro spuštění demonstračního řešení nevyžaduje nic nad rámec původního zadání.
 - Různí distributoři používají vlastní formáty a styly popisu produktových charakteristik.
 Modul `llm_parse.py` umožňuje zpracovat libovolný popis produktu do schématu s požadovanými datovými sloupci.
 - Pro demonstraci je použit levný hostovaný model s omezeným počtem požadavků za sekundu (RPS), což je dostačující pro 10–20 řádků. Pro větší datasety (např. `data.tsv`) je použit lokální model, aby se předešlo nákladům na API.
+
+#### LLM host failures
+Jednou za nějaký čas může se stat, že poskytovatel LLM je vytížený a parsing neprojde tak jak má.
+
+\- Pak má smysl spustit `./run.sh` podruhé.    
+
+#### Playwright delays
+Na `merlin` playwright knihovna funguje s viditelným zpoždením a nekonzistenci.
+
+\- Pokud není výstup - má smysl spustit `./run.sh` ještě jednou.    
+
+#### Output
+
+stderr vypisuje užitečné informace během parsing procesu, ale čisté přesměrování stdout vypisuje přísně podle zadání
+
+\- Spustit např. `./run.sh 2>&1 1>output.txt`
