@@ -17,8 +17,8 @@ def main() -> int:
         if script.name == "xdobia15_get_urls.py1" or script.name == "xblaze38_get_urls.py" or script.name == "xdomra00_get_urls.py":
             continue
         #############################################
-	if script.name == "xdobia15_get_urls.py":
-	    command.append("--chromium")
+        if script.name == "xdobia15_get_urls.py":
+            command.append("--chromium")
 
         process = subprocess.Popen(
             command,

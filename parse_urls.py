@@ -19,6 +19,7 @@ def _run_scrtipt(urls_script_input: list[str]) -> int:
         script_to_run_index = (script_to_run_index + 1) % len(scripts)
         script = scripts[script_to_run_index]
     #############################################
+    
 
     script_to_run_index = (script_to_run_index + 1) % len(scripts)
     command = [sys.executable, str(script)]
