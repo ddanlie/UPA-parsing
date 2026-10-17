@@ -1,10 +1,14 @@
 import argparse
 import os
+import signal
 from sys import stderr
 from urllib.parse import urljoin
 
 from dotenv import load_dotenv
 from playwright.sync_api import Page, sync_playwright
+
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 load_dotenv()
 

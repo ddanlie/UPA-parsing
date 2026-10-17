@@ -1,8 +1,12 @@
 import sys
 import os
+import signal
 import time
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
+
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 load_dotenv()
 

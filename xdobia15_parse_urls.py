@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import re
+import signal
 import sys
 import os
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -13,6 +14,10 @@ from llm_parse import llm_resolve_cols
 from playwright.sync_api import Page, sync_playwright
 
 from dotenv import load_dotenv
+
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
 load_dotenv()
 
 
@@ -231,7 +236,7 @@ def process_urls(urls: Iterable[str]) -> None:
                 for url, response_future in response_futures:
                     try:
                         if response := response_future.result():
-                            print(response)
+                            print(response, flush=True)
                     except Exception as error:
                         print(f"Could not process {url} with the LLM: {error}", file=sys.stderr)
             finally:

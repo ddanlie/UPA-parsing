@@ -29,11 +29,13 @@ models = [
 
 def llm_resolve_cols(text: str) -> list[str]:
 
+    response = None
     for i, model in enumerate(models):
         try:
             client = OpenAI(
                 api_key  = "xxx" if LOCAL_LLM else LLM_API_KEY,
-                base_url = "http://127.0.0.1:8080/v1" if LOCAL_LLM else LLM_HOST_BASE_URL
+                base_url = "http://127.0.0.1:8080/v1" if LOCAL_LLM else LLM_HOST_BASE_URL,
+                max_retries=0,
             )
             response = client.chat.completions.create(
                 model=model,
@@ -95,7 +97,7 @@ def llm_resolve_cols(text: str) -> list[str]:
         
         
         
-    if not response.choices[0].message.content:
+    if response is None or not response.choices[0].message.content:
         return EMPTY_COLS 
     content = response.choices[0].message.content.lstrip()
     try:
