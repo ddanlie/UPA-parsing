@@ -107,6 +107,7 @@ def main() -> None:
             ])
         try:
             page = browser.new_page()
+            page.set_extra_http_headers({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"})
             for number, brand_id in enumerate(brand_ids, start=1):
                 brand_url = get_brand_url(brand_id)
                 verbose_print(
