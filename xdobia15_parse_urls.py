@@ -12,6 +12,9 @@ from bs4 import BeautifulSoup, Tag
 from llm_parse import llm_resolve_cols
 from playwright.sync_api import Page, sync_playwright
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 CACHE_DIR = Path("cache")
 TABLES_DIR = Path("tables")

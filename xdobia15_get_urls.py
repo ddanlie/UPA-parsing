@@ -6,13 +6,13 @@ from urllib.parse import urljoin
 from dotenv import load_dotenv
 from playwright.sync_api import Page, sync_playwright
 
+load_dotenv()
 
 URL = "https://www.geekbuying.com/category/Electric-Scooters-2080"
 PAGE_LOAD_TIMEOUT_MS = 20_000
 DEFAULT_RETRIES = 3
 MERLIN = os.getenv("MERLIN", "false") == "true"
 
-load_dotenv()
 
 
 def parse_arguments() -> tuple[str, bool, int]:
