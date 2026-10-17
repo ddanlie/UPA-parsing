@@ -21,6 +21,7 @@ MAX_LLM_THREADS = 3
 PAGE_LOAD_TIMEOUT_MS = 30_000
 POST_LOAD_WAIT_MS = 5_000
 PRICE_SELECTOR = "span#saleprice"
+MERLIN = os.getenv("MERLIN", "false") == "true"
 
 
 def get_description_tables(document: Tag, url: str) -> list[Tag]:
@@ -191,7 +192,7 @@ def process_urls(urls: Iterable[str]) -> None:
     executor = ThreadPoolExecutor(max_workers=MAX_LLM_THREADS)
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
+            browser = playwright.chromium.launch(headless=True, **({"executable_path":"/usr/local/bin/chrome"} if MERLIN else {}))
             try:
                 page = browser.new_page()
                 response_futures: list[tuple[str, Future[str | None]]] = []

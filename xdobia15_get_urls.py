@@ -10,6 +10,7 @@ from playwright.sync_api import Page, sync_playwright
 URL = "https://www.geekbuying.com/category/Electric-Scooters-2080"
 PAGE_LOAD_TIMEOUT_MS = 20_000
 DEFAULT_RETRIES = 3
+MERLIN = os.getenv("MERLIN", "false") == "true"
 
 load_dotenv()
 
@@ -96,13 +97,13 @@ def main() -> None:
     engine_name, verbose, retries = parse_arguments()
     brand_ids = get_brand_ids()
     verbose_print(verbose, f"Configured brand IDs ({len(brand_ids)}): {', '.join(brand_ids)}")
-
     with sync_playwright() as pw:
         verbose_print(verbose, f"Launching {engine_name}")
         browser = getattr(pw, engine_name).launch(args=[
                 "--disable-blink-features=AutomationControlled",\
                 "--no-sandbox",\
-                "--disable-infobars"
+                "--disable-infobars",
+                "--executable-path=/usr/local/bin/chrome" if MERLIN else "",
             ])
         try:
             page = browser.new_page()
