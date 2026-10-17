@@ -15,11 +15,11 @@ def _run_scrtipt(urls_script_input: list[str]) -> int:
     script = scripts[script_to_run_index]
 
     #############################################
-    if script.name == "xdobia15_parse_urls.py1" or script.name == "xblaze38_parse_urls.py" or script.name == "xdomra00_parse_urls.py":
+    if script.name == "xdobia15_parse_urls.py" or script.name == "xblaze38_parse_urls.py" or script.name == "xdomra00_parse_urls.py1":
         script_to_run_index = (script_to_run_index + 1) % len(scripts)
         script = scripts[script_to_run_index]
     #############################################
-    
+
 
     script_to_run_index = (script_to_run_index + 1) % len(scripts)
     command = [sys.executable, str(script)]

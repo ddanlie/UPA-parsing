@@ -14,11 +14,17 @@ LLM_HOST_BASE_URL = os.getenv("LLM_HOST_BASE_URL", "")
 ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
 EMPTY_COLS = ["" for i in range(len(ITEM_COLS))]
 
+# models = [
+#     "deepseek-v4-flash",
+#     "runware/qwen3.5-9b",
+#     "runware/qwen3.5-4b",
+#     "gemma-4-31b-it"
+# ] if not LOCAL_LLM else ["Ling-3.0-tiny-Q6_K.gguf"]
+
 models = [
-    "deepseek-v4-flash",
-    "runware/qwen3.5-9b",
-    "runware/qwen3.5-4b",
-    "gemma-4-31b-it"
+    "google/gemma-3-12b-it",
+    "deepseek-ai/DeepSeek-V4-Flash-0731",
+    "Qwen/Qwen3.5-9B",
 ] if not LOCAL_LLM else ["Ling-3.0-tiny-Q6_K.gguf"]
 
 def llm_resolve_cols(text: str) -> list[str]:
