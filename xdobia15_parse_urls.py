@@ -246,7 +246,7 @@ def process_urls(urls: Iterable[str]) -> None:
 
 def main() -> None:
     urls = (line.strip() for line in sys.stdin if line.strip())
-    print("\t".join(ITEM_COLS))
+    #print("\t".join(ITEM_COLS))
     process_urls(urls)
 
 
