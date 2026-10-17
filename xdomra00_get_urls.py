@@ -1,11 +1,15 @@
   # This script  parses the vehicles page and extracts the URLs of the individual vehicle pages of chosen brands
 import os
+import signal
 from sys import stderr
 import sys
 import time
 from bs4 import BeautifulSoup
 import requests
 from dotenv import load_dotenv
+
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 load_dotenv()
 

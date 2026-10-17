@@ -1,6 +1,10 @@
 from pathlib import Path
+import signal
 import subprocess
 import sys
+
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent

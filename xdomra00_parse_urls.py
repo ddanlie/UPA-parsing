@@ -1,10 +1,14 @@
 from sys import stderr, stdin
+import signal
 from bs4 import BeautifulSoup
 import requests
 import os
 from dotenv import load_dotenv
 from llm_parse import llm_resolve_cols
 import time
+
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 load_dotenv()
 
