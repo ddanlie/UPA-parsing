@@ -2,26 +2,17 @@ import sys
 import os
 import signal
 import re
+import time
+import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright
 
 if hasattr(signal, "SIGPIPE"):
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 load_dotenv()
 
-MERLIN = os.getenv("MERLIN", "false") == "true"
 ITEM_COLS = os.getenv("ITEM_COLS", "").split(",")
-
-
-def setup_browser(playwright_instance):
-    # Initialize browser
-    browser = playwright_instance.chromium.launch(headless=True, **({"executable_path":"/usr/local/bin/chrome"} if MERLIN else {}))
-    page = browser.new_page()
-
-    # Set headers to prevent blocking script as a bot
-    page.set_extra_http_headers({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"})
-    return browser, page
 
 
 def get_table_value(page, key_names):
@@ -31,16 +22,16 @@ def get_table_value(page, key_names):
     for key_name in key_names:
         try:
             # Find items with key_name
-            rows = page.locator('#Description table tr').filter(has_text=key_name).all()
+            rows = [[cell.get_text("\n", strip=True) for cell in row.select('td, th')]
+                    for row in page.select('#Description table tr')]
 
-            for row in rows:
-                cells = row.locator('td, th')
-                cell_count = cells.count()
+            for cells in rows:
+                cell_count = len(cells)
                 if cell_count == 0:
                     continue
 
                 target_cell_index = 1 if cell_count >= 2 else 0
-                raw_text = cells.nth(target_cell_index).inner_text(timeout=2000).strip()
+                raw_text = cells[target_cell_index]
 
                 # If there are data for more table cells in one cell
                 if ":" in raw_text:
@@ -53,7 +44,7 @@ def get_table_value(page, key_names):
                                 return val
 
                 if cell_count >= 2:
-                    first_cell_text = cells.nth(0).inner_text(timeout=2000).strip()
+                    first_cell_text = cells[0]
                     if matches_key(first_cell_text, key_name):
                         val = raw_text.split('\n')[0].strip()
                         # Return text shorter than 60 characters
@@ -77,23 +68,29 @@ def shorten_product_name(name):
     return name.strip()
 
 
-def extract_product_data(page, url):
+def extract_product_data(page: BeautifulSoup, url):
     # Extraction
     try:
-        name = page.locator("h1").first.inner_text().strip()
+        heading = page.select_one("h1")
+        name = heading.get_text(" ", strip=True) if heading else ""
         name = shorten_product_name(name)
     except Exception:
         name = ""
 
     try:
-        price = page.locator(".price, #saleprice, .sale-price").first.inner_text().strip()
+        price_meta = page.select_one('meta[property="og:price:amount"]')
+        price = str(price_meta.get("content", "")).strip() if price_meta else ""
+        if not price:
+            price_node = page.select_one("#saleprice, .price, .sale-price")
+            price = price_node.get_text(" ", strip=True) if price_node else ""
     except Exception:
         price = ""
 
     brand = get_table_value(page, ["Brand"])
     if brand == "":
         try:
-            brand_text = page.locator(".brand_name").first.inner_text(timeout=1000).strip()
+            brand_node = page.select_one(".brand_name")
+            brand_text = brand_node.get_text(" ", strip=True) if brand_node else ""
             brand = brand_text.replace("Brand:", "").strip()
             if not brand:
                 brand = ""
@@ -135,21 +132,23 @@ def main():
         print("There are no urls in stdin.", file=sys.stderr)
         return
 
-    with sync_playwright() as p:
-        # Browser initialization
-        browser, page = setup_browser(p)
-
+    with requests.Session() as session:
         for url in urls:
             try:
                 # Extract data from 1 url
-                page.goto(url, timeout=20000, wait_until="domcontentloaded")
-                page.wait_for_selector('h1', state="attached", timeout=10000)
+                time.sleep(3)
+                response = session.get(url, timeout=20)
+                response.raise_for_status()
+                page = BeautifulSoup(response.text, "html.parser")
+                if "system update in progress" in page.get_text().lower():
+                    raise RuntimeError("Site temporarily unavailable")
+                if page.select_one("h1") is None:
+                    raise ValueError("Product heading not found")
                 data = extract_product_data(page, url)
                 print("\t".join(data), flush=True)
 
             except Exception as e:
                 print(f"Error with parsing {url}: {e}", file=sys.stderr)
-        browser.close()
 
 
 if __name__ == "__main__":
