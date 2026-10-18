@@ -1,3 +1,4 @@
+import argparse
 import csv
 import hashlib
 import re
@@ -12,6 +13,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Tag
 from llm_parse import llm_resolve_cols
 from playwright.sync_api import Page, sync_playwright
+import requests
 
 from dotenv import load_dotenv
 
@@ -32,8 +34,24 @@ PRICE_SELECTOR = "span#saleprice"
 MERLIN = os.getenv("MERLIN", "false") == "true"
 
 
-def get_description_tables(document: Tag, url: str) -> list[Tag]:
-    """Return all ``#Description`` tables from a BeautifulSoup document."""
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Parse product URLs from standard input.")
+    parser.add_argument(
+        "-p",
+        "--playwright",
+        action="store_true",
+        help="render pages with Playwright before parsing them",
+    )
+    parser.add_argument(
+        "--save-responses",
+        action="store_true",
+        help="save LLM responses to ./responses",
+    )
+    return parser.parse_args()
+
+
+def get_tables(document: Tag, url: str) -> list[Tag]:
+    """Div with ID description is the main body of the page containing the tables"""
     description = document.find("div", id="Description")
     tables = description.find_all("table") if description else []
     if not tables:
@@ -44,7 +62,7 @@ def get_description_tables(document: Tag, url: str) -> list[Tag]:
 
 
 def get_table_rows(table: Tag) -> list[list[str]]:
-    """Extract rows belonging to ``table``, excluding rows from nested tables."""
+    """Sometimes table cells may contain another table, in that case just return the entire table as a cells value"""
     rows: list[list[str]] = []
     for row in table.find_all("tr"):
         if row.find_parent("table") is not table:
@@ -60,22 +78,29 @@ def get_product_name(document: Tag, url: str) -> str:
     return name.get_text(" ", strip=True) if name else get_product_name_from_url(url)
 
 
-def get_product_price(document: Tag) -> tuple[str, str]:
-    sale_price = document.select_one("span#saleprice")
+def get_product_price(document: Tag, use_playwright: bool) -> tuple[str, str]:
+    """Prices are unfortunately rendered dynamically but for some reason are also contained in <meta> property after a normal get request."""
+    if use_playwright:
+        sale_price = document.select_one(PRICE_SELECTOR)
+        price = sale_price.get_text(" ", strip=True) if sale_price else ""
+    else:
+        price_meta = document.select_one('meta[property="og:price:amount"]')
+        price = price_meta.get("content", "").strip() if price_meta else ""
+
     currency = document.select_one("span#currencyF")
     return (
-        sale_price.get_text(" ", strip=True) if sale_price else "",
+        price,
         currency.get_text(" ", strip=True) if currency else "",
     )
 
 
 def get_product_name_from_url(url: str) -> str:
-    """Make a readable fallback name when the page has no product heading."""
+    """return last part of url path or "product" on failure."""
     return Path(urlparse(url).path).stem or "product"
 
 
 def get_file_stem(product_name: str) -> str:
-    """Return a portable filename stem derived from a product name."""
+    """Create filename from product name"""
     stem = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", product_name)
     stem = re.sub(r"\s+", " ", stem).strip(" .")
     return (stem or "product")[:200]
@@ -103,7 +128,7 @@ def split_compound_parameter_row(row: Sequence[str]) -> list[list[str]]:
     return entries if len(entries) > 1 else [list(row)]
 
 
-def expand_compound_parameter_rows(table: Sequence[Sequence[str]]) -> list[list[str]]:
+def split_compound_values(table: Sequence[Sequence[str]]) -> list[list[str]]:
     """Some table cells contain multiple Key: Value pairs, this splits such cells into multiple KV pairs in the table"""
     return [entry for row in table for entry in split_compound_parameter_row(row)]
 
@@ -117,7 +142,7 @@ def save_tables(
 ) -> list[Path]:
     """create csv tables for double checking and merge tables found on the website into one large table if number of columns matches."""
     non_empty_tables = [
-        expand_compound_parameter_rows(table) for table in tables if table
+        split_compound_values(table) for table in tables if table
     ]
     if not non_empty_tables:
         return []
@@ -149,6 +174,7 @@ def save_llm_thread(
     sale_price: str,
     currency: str,
     tables: Sequence[Tag],
+    save_response: bool,
 ) -> str | None:
     """Resolve product columns from all tables and save the LLM response."""
     if not tables:
@@ -163,10 +189,11 @@ def save_llm_thread(
         ]
     )
 
-    RESPONSES_DIR.mkdir(parents=True, exist_ok=True)
-    response_path = RESPONSES_DIR / f"{get_file_stem(product_name)}.out"
     response = "\t".join(llm_resolve_cols(table_content))
-    response_path.write_text(response + "\n", encoding="utf-8")
+    if save_response:
+        RESPONSES_DIR.mkdir(parents=True, exist_ok=True)
+        response_path = RESPONSES_DIR / f"{get_file_stem(product_name)}.out"
+        response_path.write_text(response + "\n", encoding="utf-8")
     return response
 
 
@@ -175,8 +202,19 @@ def get_cache_path(url: str) -> Path:
     return CACHE_DIR / f"{url_hash}.html"
 
 
-def get_cached_page(page: Page, url: str) -> BeautifulSoup:
-    """Get page from cache then construct beautiful soup"""
+def get_cached_page(url: str) -> BeautifulSoup:
+    """Pure beautiful soup"""
+    cache_path = get_cache_path(url)
+    if not cache_path.is_file():
+        response = requests.get(url, timeout=PAGE_LOAD_TIMEOUT_MS / 1_000)
+        response.raise_for_status()
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(response.text, encoding="utf-8")
+    return BeautifulSoup(cache_path.read_text(encoding="utf-8"), "html.parser")
+
+
+def get_rendered_cached_page(page: Page, url: str) -> BeautifulSoup:
+    """Playwright to load dynamic content -> Beautiful soup"""
     cache_path = get_cache_path(url)
     if cache_path.is_file():
         cached_page = BeautifulSoup(
@@ -194,54 +232,92 @@ def get_cached_page(page: Page, url: str) -> BeautifulSoup:
     return BeautifulSoup(cache_path.read_text(encoding="utf-8"), "html.parser")
 
 
-def process_urls(urls: Iterable[str]) -> None:
-    """ Create playwright -> use playwright to load website content along with dynamically loaded elements (Prices were dynamically loaded) ->
-     save DOM and load it using beautifulSoup -> get tables and price -> send it over to LLM -> LLM returns all the necessary data."""
+def queue_url(
+    url: str,
+    document: Tag,
+    use_playwright: bool,
+    save_responses: bool,
+    executor: ThreadPoolExecutor,
+    response_futures: list[tuple[str, Future[str | None]]],
+) -> None:
+    """Parse product and feed it to the llm. """
+    tables = get_tables(document, url)
+    product_name = get_product_name(document, url)
+    sale_price, currency = get_product_price(document, use_playwright)
+    save_tables(
+        product_name,
+        url,
+        sale_price,
+        currency,
+        [get_table_rows(table) for table in tables],
+    )
+    response_futures.append(
+        (
+            url,
+            executor.submit(
+                save_llm_thread,
+                product_name,
+                url,
+                sale_price,
+                currency,
+                tables,
+                save_responses,
+            ),
+        )
+    )
+
+
+def process_urls(
+    urls: Iterable[str], use_playwright: bool, save_responses: bool
+) -> None:
+    """Core of URL processing: Uses beautiful soup for parsing and playwright if enabled for dynamic content loading. Only feeds tables to LLM to save on tokens. """
     executor = ThreadPoolExecutor(max_workers=MAX_LLM_THREADS)
     try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, **({"executable_path":"/usr/local/bin/chrome"} if MERLIN else {}))
-            try:
-                page = browser.new_page()
-                response_futures: list[tuple[str, Future[str | None]]] = []
-                for url in urls:
-                    try:
-                        document = get_cached_page(page, url)
-                        tables = get_description_tables(document, url)
-                        product_name = get_product_name(document, url)
-                        sale_price, currency = get_product_price(document)
-                        save_tables(
-                            product_name,
-                            url,
-                            sale_price,
-                            currency,
-                            [get_table_rows(table) for table in tables],
-                        )
-                        response_futures.append(
-                            (
+        response_futures: list[tuple[str, Future[str | None]]] = []
+        if use_playwright:
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch(
+                    headless=True,
+                    **({"executable_path": "/usr/local/bin/chrome"} if MERLIN else {}),
+                )
+                try:
+                    page = browser.new_page()
+                    for url in urls:
+                        try:
+                            queue_url(
                                 url,
-                                executor.submit(
-                                    save_llm_thread,
-                                    product_name,
-                                    url,
-                                    sale_price,
-                                    currency,
-                                    tables,
-                                ),
+                                get_rendered_cached_page(page, url),
+                                use_playwright,
+                                save_responses,
+                                executor,
+                                response_futures,
                             )
-                        )
-                    except Exception as error:
-                        print(f"Could not load {url}: {error}", file=sys.stderr)
+                        except Exception as error:
+                            print(f"Could not load {url}: {error}", file=sys.stderr)
+                finally:
+                    browser.close()
+        else:
+            for url in urls:
+                try:
+                    queue_url(
+                        url,
+                        get_cached_page(url),
+                        use_playwright,
+                        save_responses,
+                        executor,
+                        response_futures,
+                    )
+                except Exception as error:
+                    print(f"Could not load {url}: {error}", file=sys.stderr)
 
-                for url, response_future in response_futures:
-                    try:
-                        if response := response_future.result():
-                            print(response, flush=True)
-                    except Exception as error:
-                        print(f"Could not process {url} with the LLM: {error}", file=sys.stderr)
-            finally:
-                browser.close()
+        for url, response_future in response_futures:
+            try:
+                if response := response_future.result():
+                    print(response, flush=True)
+            except Exception as error:
+                print(f"Could not process {url} with the LLM: {error}", file=sys.stderr)
     except KeyboardInterrupt:
+        """Cancels the future tasks, the currently running tasks will crash on an unhandled exception."""
         executor.shutdown(wait=False, cancel_futures=True)
         print("Interrupted: cancelled pending LLM jobs.", file=sys.stderr)
         return
@@ -250,9 +326,10 @@ def process_urls(urls: Iterable[str]) -> None:
 
 
 def main() -> None:
-    urls = (line.strip() for line in sys.stdin if line.strip())
+    arguments = parse_arguments()
+    urls = (line.strip() for line in sys.stdin if line.strip()) # creates list of strings
     #print("\t".join(ITEM_COLS))
-    process_urls(urls)
+    process_urls(urls, arguments.playwright, arguments.save_responses)
 
 
 if __name__ == "__main__":
