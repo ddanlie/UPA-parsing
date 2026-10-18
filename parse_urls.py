@@ -19,7 +19,7 @@ def _run_scrtipt(urls_script_input: list[str]) -> int:
     script = scripts[script_to_run_index]
 
     #############################################
-    while script.name == "xdobia15_parse_urls.py" or script.name == "xblaze38_parse_urls.py" or script.name == "xdomra00_parse_urls.py1":
+    while script.name == "xdobia15_parse_urls.py-NOSKIP" or script.name == "xblaze38_parse_urls.py-NOSKIP" or script.name == "xdomra00_parse_urls.py1-NOSKIP":
         script_to_run_index = (script_to_run_index + 1) % len(scripts)
         script = scripts[script_to_run_index]
     #############################################
