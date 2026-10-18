@@ -25,6 +25,9 @@ def setup_browser(playwright_instance):
 
 
 def get_table_value(page, key_names):
+    def matches_key(text, key):
+        return text.strip().rstrip(":").strip().casefold() == key.casefold()
+
     for key_name in key_names:
         try:
             # Find items with key_name
@@ -43,7 +46,7 @@ def get_table_value(page, key_names):
                 if ":" in raw_text:
                     for line in raw_text.split('\n'):
                         # Find key in any line inside a cell
-                        if key_name.lower() in line.lower() and ":" in line:
+                        if ":" in line and matches_key(line.split(":", 1)[0], key_name):
                             val = line.split(":", 1)[1].strip()
                             if val and len(val) < 60:
                                 # Return part after found key and ": " if exists and is shorter than 60 characters
@@ -51,7 +54,7 @@ def get_table_value(page, key_names):
 
                 if cell_count >= 2:
                     first_cell_text = cells.nth(0).inner_text(timeout=2000).strip()
-                    if key_name.lower() in first_cell_text.lower():
+                    if matches_key(first_cell_text, key_name):
                         val = raw_text.split('\n')[0].strip()
                         # Return text shorter than 60 characters
                         if len(val) < 60:
@@ -59,12 +62,12 @@ def get_table_value(page, key_names):
 
         except Exception:
             continue
-    return "-"
+    return ""
 
 
 def shorten_product_name(name):
     if not name:
-        return "-"
+        return ""
 
     # Find "Electric" in name and 1 next word
     match = re.search(r"(?i)\bElectric\s+([A-Za-z0-9-]+)", name)
@@ -80,20 +83,20 @@ def extract_product_data(page, url):
         name = page.locator("h1").first.inner_text().strip()
         name = shorten_product_name(name)
     except Exception:
-        name = "-"
+        name = ""
 
     try:
         price = page.locator(".price, #saleprice, .sale-price").first.inner_text().strip()
     except Exception:
-        price = "-"
+        price = ""
 
     brand = get_table_value(page, ["Brand"])
-    if brand == "-":
+    if brand == "":
         try:
             brand_text = page.locator(".brand_name").first.inner_text(timeout=1000).strip()
             brand = brand_text.replace("Brand:", "").strip()
             if not brand:
-                brand = "-"
+                brand = ""
         except Exception:
             pass
 
@@ -107,7 +110,7 @@ def extract_product_data(page, url):
         "url": url, "name": name, "price": price, "brand": brand, "colors": colors,
         "motor power": motor_power, "battery power capacity": battery, "range": range_val, "speed": speed
     }
-    raw_data = [data_dict.get(col, "-") for col in ITEM_COLS]
+    raw_data = [data_dict.get(col, "") for col in ITEM_COLS]
 
     # Remove \n, \r and \t from collected data
     cleaned_data = [str(val).replace('\n', ' ').replace('\r', '').replace('\t', ' ').strip() for val in raw_data]

@@ -2,6 +2,7 @@ import sys
 import os
 import signal
 import time
+import re
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 
@@ -39,26 +40,39 @@ def build_page_url(category, brand_id, page_num):
 def extract_urls_from_page(page):
     urls = set()
 
-    EXCLUDED_WORDS = [
-        "bag", "charger", "battery", "tire", "helmet", "display", "seat", "accessories",
-        "motor", "printer", "laser", "monitor", "projector", "smartwatch", "purifier",
-        "camera", "vacuum", "pc", "starter", "station"
-    ]
-
     # Find detail pages with "/item/" in url
     hrefs = page.locator('a[href*="/item/"]').evaluate_all("elements => elements.map(el => el.getAttribute('href'))")
 
     for href in hrefs:
         if href:
             # Add BASE_URL for relative links
-            full_url = href if href.startswith("http") else BASE_URL + href
+            if href.startswith("//"):
+                full_url = "https:" + href
+            elif href.startswith("/"):
+                full_url = BASE_URL + href
+            else:
+                full_url = href
+            match = re.fullmatch(
+                r"https?://www\.geekbuying\.com(/[^?#]*)(?:\?([^#]*))?(?:#.*)?",
+                full_url, re.IGNORECASE,
+            )
+            if not match:
+                continue
+            path = match.group(1).lower()
+            query = match.group(2) or ""
 
             # Ignore suggested and excluded items
-            if "?pmrm=" in full_url or any(word in full_url.lower() for word in EXCLUDED_WORDS):
+            if "pmrm=" in query.lower():
+                continue
+            if not path.startswith("/item/") or not path.endswith(".html"):
+                continue
+            if not re.search(r"(?:^|[-/])(?:bike|bicycle|ebike|scooter)(?:-|\.)", path):
+                continue
+            if re.search(r"(?:^|[-/])(?:for|motorcycle)(?:-|\.)", path):
                 continue
 
             # Add url to set
-            urls.add(full_url)
+            urls.add(BASE_URL + match.group(1))
     return urls
 
 
@@ -83,6 +97,7 @@ def main():
 
                     except Exception as e:
                         # Continue if brand doesn't have more pages
+                        print(f"Could not load {target_url}: {e}", file=sys.stderr, flush=True)
                         continue
 
                     # Extract products urls
@@ -95,7 +110,7 @@ def main():
         browser.close()
 
     # Print urls
-    for url in urls:
+    for url in sorted(urls):
         print(url, flush=True)
 
 
