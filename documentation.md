@@ -1,0 +1,1 @@
+* The data is mostly numerical, so for clusterizing we convert them. Color - nominal -> one-hot encoding
