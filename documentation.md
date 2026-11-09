@@ -52,7 +52,7 @@ Rozdělení všech numerických atributů je představeno následujícími grafy
 | `range_km` | 331 | 89,59 | 196,87 | 0 | 64 | 2 520 |
 | `speed_kmh` | 331 | 36,00 | 24,11 | 0 | 25 | 250 |
 
-Rozdělení cen je široké a pravostranně vychýlené, protože medián je viditelně o něco menší jak průměr. Totéž platí i u výkonu motoru, kde hodnota 750 000 několikanásobně převyšuje ostatní hodnoty a výrazně zvedá průměr, což je dokázané také obrovskou směrodatnou odchylkou. Kapacita baterie má pouze 172 hodnot, takže tento sloupec bude přibližně u poloviny dat mít chybějící hodnotu. Ostatní hodnoty jsou celkem rozumné a nejsou v nich vidět nějaké extrémně vzdálené anomálie mimo nulové hodnoty samozřejmě.
+Rozdělení cen je široké a pravostranně vychýlené, protože medián je viditelně o něco menší jak průměr. Totéž platí i u výkonu motoru, kde hodnota 750 000 několikanásobně převyšuje ostatní hodnoty a výrazně zvedá průměr, což je dokázané také obrovskou směrodatnou odchylkou. Kapacita baterie má pouze 172 hodnot, takže tento sloupec bude přibližně u poloviny dat mít chybějící hodnotu. Ostatní hodnoty jsou celkem rozumné a nejsou v nich vidět nějaké extrémně vzdálené anomálie mimo nulové hodnoty a maximální rychlosti 250 km/h a dojezdu 2 520 km.
 
 > TODO: Tady přidat grafy pro numerické atributy a podrobně popsat zjištění.
 
@@ -87,7 +87,7 @@ V rámci kategorických atributů nelze říct, zda obsahují nějaké podezřel
 
 Největší problém představují chybějící údaje o kapacitě baterie a barvě, kde chybí téměř polovina hodnot. Na následujícím grafu je rozložení řádků podle počtu chybějících hodnot. Některé záznamy mají dokonce 6 nebo 7 chybějících hodnot a zde nemá cenu hodnoty dopočítávat, protože zde může být mezi jednotlivými atributy korelace, která by mohla výrazně zkreslit hodnoty u těchto záznamů s téměř nulovou počáteční informací.
 
-Téměř všechny záznamy mají chybějící maximálně 2 hodnoty. Pro tyto záznamy je vhodné dopočítat chybějící numerické atributy. Kategorické nominální atributy, jako je barva, která má výrazný podíl chybějících hodnot v datech, bohužel nejsme schopni určit kategorii produktu a nezbývá, než nechat tyto hodnoty prázdné.
+Téměř všechny záznamy mají chybějící maximálně 2 hodnoty. Pro tyto záznamy je vhodné dopočítat chybějící numerické atributy. U kategorických nominálních atributů, jako je barva, která má výrazný podíl chybějících hodnot v datech, bohužel nejsme schopni určit kategorii produktu a nezbývá, než nechat tyto hodnoty prázdné, nebo je vyplnit nějakou z dostupných barev nebo vyplnit náhodně vybranou barvou.
 
 > TODO: Dodat grafy z notebooku.
 
