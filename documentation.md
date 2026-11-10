@@ -38,8 +38,6 @@ Explorativní analýza v `task_1_exploratory_analysis.ipynb` vychází z připra
 
 Analýza vychází z 334 řádků a 9 atributů, kde jsou 2 textové (`url`, `name`), 5 numerických (`price`, `motor_power_w`, `battery_capacity_wh`, `range_km`, `speed_kmh`) a 2 kategorické (`brand`, `color`). Tabulka obsahuje 320 unikátních URL a některé se opakují a odpovídají barevným variantám toho samého produktu. Proto řádky nepředstavují vždy nezávislé výrobky a je potřeba na to myslet při rozdělení množiny na trénovací a testovací data modelu.
 
-> TODO: Popis jednotlivých sloupců uceleným textem (třeba z informací pomocí describe() metody). Konkrétně chybí třeba nejčastější hodnoty, rozsah hodnot...
-
 ## 2.2 Rozdělení numerických atributů
 
 Rozdělení všech numerických atributů je představeno následujícími grafy. Grafy kombinují histogram a boxplot, aby ukázaly tvar rozdělení i potenciální odlehlé hodnoty.
@@ -54,15 +52,27 @@ Rozdělení všech numerických atributů je představeno následujícími grafy
 
 Rozdělení cen je široké a pravostranně vychýlené, protože medián je viditelně o něco menší jak průměr. Totéž platí i u výkonu motoru, kde hodnota 750 000 několikanásobně převyšuje ostatní hodnoty a výrazně zvedá průměr, což je dokázané také obrovskou směrodatnou odchylkou. Kapacita baterie má pouze 172 hodnot, takže tento sloupec bude přibližně u poloviny dat mít chybějící hodnotu. Ostatní hodnoty jsou celkem rozumné a nejsou v nich vidět nějaké extrémně vzdálené anomálie mimo nulové hodnoty a maximální rychlosti 250 km/h a dojezdu 2 520 km.
 
-> TODO: Tady přidat grafy pro numerické atributy a podrobně popsat zjištění.
+Následující grafy zobrazují pro každý numerický atribut histogram a boxplot. Kvůli šikmosti a velkým rozdílům v rozsahu používají některé osy logaritmické měřítko. Hodnoty na osách jsou popsané v původních jednotkách.
+
+![Rozdělení cen](doc-src/eda_numeric_price.png){ width=95% }
+
+![Rozdělení výkonu motoru](doc-src/eda_numeric_motor_power_w.png){ width=95% }
+
+![Rozdělení kapacity baterie](doc-src/eda_numeric_battery_capacity_wh.png){ width=95% }
+
+![Rozdělení dojezdu](doc-src/eda_numeric_range_km.png){ width=95% }
+
+![Rozdělení maximální rychlosti](doc-src/eda_numeric_speed_kmh.png){ width=95% }
 
 ## 2.3 Rozdělení kategorických atributů
 
-Tato podkapitola pracuje s grafy četností kategorií. V uložených výsledcích jsou přímo doloženy grafy četností všech značek a barev a srovnání nejčastějších kategorií a jejich kombinací.
+Tato podkapitola pracuje s grafy četností všech zaznamenaných značek a barev. Chybějící hodnoty se v těchto grafech jako kategorie nezobrazují.
 
 Značka má 306 hodnot a to 51 různých, kde se nejčastěji vyskytují `fafrees` (41 záznamů), `iscooter` (25 záznamů) a `joyor` (23 záznamů). Barva je známa pouze u 196 řádků a má 37 různých hodnot po rozdělení a normalizaci textu. Nejčastější barvy jsou `black` (56), `blue` (25), `grey` (19), `white` (17) a `red` (16).
 
-> TODO: Tady přidat grafy pro kategorické atributy a podrobně popsat zjištění.
+![Četnosti značek](doc-src/eda_categories_brand_all.png){ width=75% }
+
+![Četnosti barev](doc-src/eda_categories_color_all.png){ width=75% }
 
 ## 2.4 Odlehlé a podezřelé hodnoty
 
@@ -70,7 +80,9 @@ Krabicové grafy a histogramy ukazují extrémní nebo věcně nepravděpodobné
 
 V rámci kategorických atributů nelze říct, zda obsahují nějaké podezřelé hodnoty. U sloupce barva dominují základní barvy a další hodnoty představují méně používané barvy, ale nic nenaznačuje, že některé hodnoty by do této datové sady neměly patřit. Atribut značka je na tom velmi podobně. Obsahuje spoustu značek, které prodávají pouze pár druhů produktů, ale nelze říct, že některá značka mezi ně nepatří.
 
-> TODO: Napsat, jak jsme odlehlé hodnoty detekovali. Alespoň 2 metody.
+Podezřelé numerické hodnoty jsme posuzovali dvěma doplňujícími způsoby. V explorativní analýze jsme vizuálně kontrolovali histogramy a boxploty, což zobrazuje dlouhé vychýlené histogramy a hodnoty vzdálené od většiny pozorování, ale samy o sobě neurčují, zda jde o chybu. Příklady k ověření jsou výkon 750 000 W, dojezd 2 520 km a maximální rychlost 250 km/h.
+
+Dále se používá numerické pravidlo mezikvartilového rozpětí (IQR). Pro každý zahrnutý atribut se počítají meze $Q_1 - 1{,}5 \dot IQR$ a $Q_3 + 1{,}5 \dot IQR$, kde $IQR = Q_3 - Q_1$. Záznam s hodnotou mimo meze alespoň jednoho atributu se vyřadí.
 
 ## 2.5 Chybějící hodnoty
 
@@ -89,13 +101,19 @@ Největší problém představují chybějící údaje o kapacitě baterie a bar
 
 Téměř všechny záznamy mají chybějící maximálně 2 hodnoty. Pro tyto záznamy je vhodné dopočítat chybějící numerické atributy. U kategorických nominálních atributů, jako je barva, která má výrazný podíl chybějících hodnot v datech, bohužel nejsme schopni určit kategorii produktu a nezbývá, než nechat tyto hodnoty prázdné, nebo je vyplnit nějakou z dostupných barev nebo vyplnit náhodně vybranou barvou.
 
-> TODO: Dodat grafy z notebooku.
+![Podíl chybějících hodnot podle atributu](doc-src/eda_missing_columns.png){ width=95% }
+
+![Podíl řádků podle počtu chybějících hodnot](doc-src/eda_missing_rows.png){ width=95% }
 
 ## 2.6 Vztahy mezi atributy a korelační analýza
 
 Z následujcící heatmapy vychází korelace ceny s kapacitou baterie 0,58, s rychlostí 0,36 a s dojezdem 0,35; s výkonem motoru je téměř nulová (0,01). Kapacita baterie koreluje s výkonem motoru (0,72), rychlostí (0,63) a dojezdem (0,60). Přičemž v datech se nacházejí extrémy v podobě nulových a vysokých hodnot atributů, které mohou koeficienty ovlivňovat. Korelační analýza ukazuje korelaci převážně pozue mezi kapacitou baterie a všemi ostatními atributy. Bez upravené datové sady nelze vyvodit přesnější závěr.
 
-> TODO: Graf korelační heatmapy.
+![Korelační heatmapa numerických atributů](doc-src/eda_correlation.png){ width=85% }
+
+![Párové vztahy numerických atributů](doc-src/eda_pairplot.png){ width=95% }
+
+Párový graf zobrazuje na diagonále rozdělení jednotlivých numerických atributů a mimo diagonálu jejich vzájemné bodové vztahy. Vstupy jsou standardizované, aby rozdílné měřítko atributů nezměnilo vizuální srovnání. Kvůli chybějícím hodnotám kapacity baterie v záznamech je v grafech s kapacitou baterie méně bodů. Je vidět, že vychýlená data nám velmi rozhodila některé bodové grafy.
 
 ## 2.7 Shrnutí
 
