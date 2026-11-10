@@ -1,12 +1,12 @@
 # UPA projekt 2. část
 
-**Tým:** xdomra00, xdobia15, xblaze38
-**Zdrojová data:** produktové stránky e-shopu Geekbuying, <https://www.geekbuying.com/>.
+**Tým:** xdomra00, xdobia15, xblaze38\
+**Zdrojová data:** produktové stránky e-shopu Geekbuying, <https://www.geekbuying.com/>.\
 **Typ produktů:** elektrické koloběžky a elektrokola.
 
 # 1. Představení datové sady
 
-Vstupem je výstup webového sběru z první části projektu obsahující data o elektrických koloběžkách a elektrokolech z e-shopu Geekbuying (https://www.geekbuying.com/). Záznam obsahuje URL produktu, název, cenu, značku, barvu, výkon motoru, kapacitu baterie, dojezd a maximální rychlost. Barva a značka jsou kategorické a ostatní atributy jsou numerické a jejich jednotky jsou součástí významu atributu (W, Wh, km, km/h). Cena je v měně převzaté ze vstupních dat.
+Vstupem je výstup webového sběru z první části projektu obsahující data o elektrických koloběžkách a elektrokolech z e-shopu Geekbuying. Záznam obsahuje URL produktu, název, cenu, značku, barvu, výkon motoru, kapacitu baterie, dojezd a maximální rychlost. Barva a značka jsou kategorické a ostatní atributy jsou numerické a jejich jednotky jsou součástí významu atributu (W, Wh, km, km/h). Cena je v měně převzaté ze vstupních dat.
 
 Při rozdělení složeného atributu barva obsahující i více barev do samostatných řádků se počet záznamů zvýšil z 320 na 334. Výsledná tabulka obsahuje 320 různých URL, kde se některá z nich opakují i čtyřikrát, přičemž tyto opakované řádky reprezentují barevné varianty toho samého produktu.
 
