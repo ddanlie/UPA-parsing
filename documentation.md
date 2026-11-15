@@ -82,7 +82,7 @@ V rámci kategorických atributů nelze říct, zda obsahují nějaké podezřel
 
 Podezřelé numerické hodnoty jsme posuzovali dvěma doplňujícími způsoby. V explorativní analýze jsme vizuálně kontrolovali histogramy a boxploty, což zobrazuje dlouhé vychýlené histogramy a hodnoty vzdálené od většiny pozorování, ale samy o sobě neurčují, zda jde o chybu. Příklady k ověření jsou výkon 750 000 W, dojezd 2 520 km a maximální rychlost 250 km/h.
 
-Dále se používá numerické pravidlo mezikvartilového rozpětí (IQR). Pro každý zahrnutý atribut se počítají meze $Q_1 - 1{,}5 \dot IQR$ a $Q_3 + 1{,}5 \dot IQR$, kde $IQR = Q_3 - Q_1$. Záznam s hodnotou mimo meze alespoň jednoho atributu se vyřadí.
+Dále se používá numerické pravidlo mezikvartilového rozpětí (IQR). Pro každý zahrnutý atribut se počítají meze $Q_1 - 1{,}5 \cdot IQR$ a $Q_3 + 1{,}5 \cdot IQR$, kde $IQR = Q_3 - Q_1$. Záznam s hodnotou mimo meze alespoň jednoho atributu se vyřadí.
 
 ## 2.5 Chybějící hodnoty
 
@@ -123,18 +123,24 @@ Data kombinují elektrokola a elektrické koloběžky, které mohou mít lehce r
 
 Obě navazující varianty se načítají ze stejného `clean_data.pkl`, kde jsou z atributů vyřazeny `url` a `name`, které mají čistě jen informativní účel o výrobku a nejsou vstupními vlastnostmi zvolených metod.
 
-## 3.1 Příprava dat pro shlukování výrobků
+## 3.1 Chybějící hodnoty a odlehlé hodnoty
 
-> TODO: Dodělat.
+Obě varianty doplňují chybějící značku hodnotou `Unknown` a chybějící barvu nejčastější barvou. Podmínka pro filtrování vyžaduje, aby měl každý řádek vyplněné všechny numerické atributy zahrnuté do filtru, takže řádky s chybějícími numerickými hodnotami jsou odstraněny.
 
-## 3.2 Příprava dat pro predikci ceny výrobku
+Odlehlé hodnoty se odstraňují iterativně, kdy se v každém průchodu pro aktuální data přepočítají meze $1,5 \cdot IQR$ a odstraní se záznam, pokud alespoň jeden zahrnutý atribut leží mimo meze nebo v něm chybí hodnota. Toto se opakuje, dokud aktuální průchod žádné řádky neodstraní. Ve variantě pro shlukování filtr zahrnuje cenu, výkon, kapacitu, dojezd a rychlost, zatímco ve variantě pro predikci ceny zahrnuje pouze výkon, kapacitu, dojezd a rychlost.
 
-> TODO: Dodělat.
+## 3.2 Příprava dat pro shlukování výrobků
 
-## 3.3 Chybějící hodnoty a odlehlé hodnoty
+V `task_2_1_clusters.ipynb` se ze vstupních dat nejprve odstraní atributy `url` a `name`, které jsou pouze informativní a nejsou vlastnosti výrobku pro dolování. Chybějící značka se nahradí kategorií `Unknown` a chybějící barva nejčastější zaznamenanou barvou. Numerické atributy se následně filtrují podle iterativního pravidla $1,5 \cdot IQR$.
 
-> TODO: Dodělat.
+Po filtraci se cena, výkon motoru, kapacita baterie, dojezd a rychlost převedou na kategorie. Hranice intervalů vycházejí z minima, mediánu, 3. kvartilu a horní hranice je nekonečno. Kategorie dostávají štítky `low`/`medium`/`high`, pro kapacitu `small`/`medium`/`large`, pro dojezd `short`/`medium`/`long` a pro rychlost `slow`/`medium`/`fast`. Výsledná tabulka tak obsahuje sedm kategoriálních atributů (barva a značka byly již kategorické a nově i výkon, kapacita, dojezd, rychlost a cena). Výsledná připravená data se ukládají do `cluster_data.csv`.
+
+## 3.3 Příprava dat pro predikci ceny výrobku
+
+V `task_2_2_price_prediction.ipynb` se ze vstupních dat odstraní `url` a `name`, značka se také doplní kategorií `Unknown` a chybějící barva nejčastější zaznamenanou barvou jako v předchozí přípravě dat pro shlukování výrobků. Následuje filtr odlehlých hodnot ve čtyřech numerických atributech (výkon, kapacita, dojezd a rychlost).
+
+Značka a barva se převedou metodou one-hot encoding, jelikož nejsou ordinálními kategorickými atributy. Poté výstup obsahuje cílovou cenu, čtyři numerické prediktory (`motor_power_w`, `battery_capacity_wh`, `range_km`, `speed_kmh`). Data jsou uložena do `price_prediction_data.csv`. Normalizace se neprovádí, protože se nevytváří trénovací a testovací množina a je vhodné případný scaler odhadnout až po rozdělení dat, pouze na daných trénovacích prediktorech, a stejnou transformaci použít na testovacích datech.
 
 # 4. Závěr
 
-> TODO: Dodělat.
+Tato 2. část projektu analyzuje 334 záznamů elektrických koloběžek a elektrokol, které obsahují 320 různých produktových URL. Explorativní analýza odhalila chybějící hodnoty, a to zejména u kapacity baterie a barvy. Dále odhalila podezřelé extrémy v numerických atributech. Tyto chybějící a extrémní hodnoty byly odfilitrovány a pro další dolování jsou připraveny dvě varianty (příprava dat pro shlukování výrobků a příprava dat pro predikci ceny výrobku).
